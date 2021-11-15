@@ -60,7 +60,9 @@ type mySidebar struct {
 	resCellSize *WideEntry
 	resRequest  bool
 
-	miscCard *widget.Card
+	miscCard   *widget.Card
+	miscFull   *widget.Button
+	miscCredit *widget.Button
 }
 
 func newSidebar(a *myApp) *mySidebar {
@@ -264,12 +266,42 @@ func (s *mySidebar) resResetSubmitted(_ string) {
 func (s *mySidebar) buildMisc() *widget.Card {
 	// draw grid
 	s.confDrawGrid = widget.NewCheck("Draw cell grid", s.confConfigChecked)
+	// fullscreen button
+	s.miscFull = widget.NewButton("Fullscreen", s.toggleFullscreen)
+	// credits window
+	s.miscCredit = widget.NewButton("Credits", s.miscCreditCB)
 
 	contCard := container.NewVBox(
 		s.confDrawGrid,
+		container.NewGridWithColumns(2,
+			s.miscFull,
+			s.miscCredit,
+		),
 	)
 	s.miscCard = widget.NewCard("Misc", "", contCard)
 	return s.miscCard
+}
+
+// Clicked button toggle fullscreen.
+func (s *mySidebar) toggleFullscreen() {
+	newState := !s.a.mainWin.FullScreen()
+	s.a.mainWin.SetFullScreen(newState)
+	if newState {
+		s.miscFull.SetText("Window")
+	} else {
+		s.miscFull.SetText("Fullscreen")
+	}
+}
+
+// Clicked button show credits.
+func (s *mySidebar) miscCreditCB() {
+	w := CreditsWindow(fyne.CurrentApp(), fyne.NewSize(1000, 600))
+	w.Canvas().SetOnTypedKey(func(ev *fyne.KeyEvent) {
+		if ev.Name == fyne.KeyEscape {
+			w.Close()
+		}
+	})
+	w.Show()
 }
 
 // --------------------------------------------------------------------------------
@@ -544,6 +576,8 @@ func (a *myApp) typedKey(ev *fyne.KeyEvent) {
 	switch ev.Name {
 	case fyne.KeyEscape, fyne.KeyQ:
 		a.fyneApp.Quit()
+	case fyne.KeyF, fyne.KeyF11:
+		a.s.toggleFullscreen()
 	default:
 	}
 }
