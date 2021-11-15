@@ -44,10 +44,9 @@ type mySidebar struct {
 	confCard     *widget.Card
 	confApply    *widget.Button
 	confFireNum  *widget.Entry
-	confTickLen  *widget.Entry
-	confBliCool  *widget.Entry
 	confNAmount  *widget.Entry
-	confNRadius  *widget.Entry
+	confNRadius  *widget.Slider
+	confNRlab    *widget.Label
 	confDrawGrid *widget.Check
 	confInteract *widget.Check
 	confRequest  bool
@@ -60,6 +59,8 @@ type mySidebar struct {
 	resPerMax   *widget.Entry
 	resCellSize *WideEntry
 	resRequest  bool
+
+	miscCard *widget.Card
 }
 
 func newSidebar(a *myApp) *mySidebar {
@@ -72,6 +73,7 @@ func (s *mySidebar) buildSidebar() *container.Scroll {
 		container.NewVBox(
 			s.buildConfig(),
 			s.buildReset(),
+			s.buildMisc(),
 		),
 	)
 	return contSidebar
@@ -88,33 +90,23 @@ func (s *mySidebar) initSidebar() {
 
 // Set params that do not require a reset of the world.
 //
-// * firefly amount
+// * Firefly amount
 // * clockTickLen
 // * nudgeAmount
 // * nudgeRadius
 // * blinkCooldown
-// * drawCheckerboard
 // * interact fireflies
 func (s *mySidebar) buildConfig() *widget.Card {
-
-	// draw grid - interact fireflies
-	s.confDrawGrid = widget.NewCheck("Draw grid", s.confConfigChecked)
-	s.confInteract = widget.NewCheck("Interaction", s.confConfigChecked)
 
 	// button to reset world
 	s.confApply = widget.NewButton("Apply", s.confApplyCB)
 
-	// clockTickLen entry
-	s.confTickLen = widget.NewEntry()
-	s.confTickLen.Text = "25"
-	s.confTickLen.OnSubmitted = s.confConfigSubmitted
-	// contClockLen := container.NewBorder( nil, nil, widget.NewLabel("Tick length:"), widget.NewLabel("ms"), s.confTickLen)
-
-	// blinkCooldown entry
-	s.confBliCool = widget.NewEntry()
-	s.confBliCool.Text = "500"
-	s.confBliCool.OnSubmitted = s.confConfigSubmitted
-	// contBlinkCooldown := container.NewBorder(nil, nil, widget.NewLabel("Blink cooldown:"), widget.NewLabel("ms"), s.confBliCool)
+	// interact fireflies
+	s.confInteract = widget.NewCheck("Do interaction", s.confConfigChecked)
+	// contInteract := container.NewBorder(
+	// 	nil, nil, widget.NewLabel("Do interactions:"), nil,
+	// 	s.confInteract,
+	// )
 
 	// number of fireflies entry
 	s.confFireNum = widget.NewEntry()
@@ -126,35 +118,30 @@ func (s *mySidebar) buildConfig() *widget.Card {
 		s.confFireNum,
 	)
 
-	// nudge
-	// TODO sliders are a lot better
+	// nudge amount
 	s.confNAmount = widget.NewEntry()
 	s.confNAmount.Text = "20"
 	s.confNAmount.OnSubmitted = s.confConfigSubmitted
-	s.confNRadius = widget.NewEntry()
-	// s.confNRadius.Text = "30"
-	s.confNRadius.Text = "25"
-	s.confNRadius.OnSubmitted = s.confConfigSubmitted
-	contNudge := container.NewBorder(
-		nil, nil, widget.NewLabel("Nudge:"), nil,
-		container.NewGridWithColumns(2,
-			container.NewBorder(
-				nil, nil, widget.NewLabel("By:"), widget.NewLabel("ms"),
-				s.confNAmount,
-			),
-			container.NewBorder(
-				nil, nil, widget.NewLabel("Radius:"), widget.NewLabel("px"),
-				s.confNRadius,
-			),
-		),
+	contNAmount := container.NewBorder(
+		nil, nil, widget.NewLabel("Nudge by:"), widget.NewLabel("ms"),
+		s.confNAmount,
+	)
+
+	// nudge radius
+	s.confNRlab = widget.NewLabel("")
+	s.confNRadius = widget.NewSlider(0, 50)
+	s.confNRadius.OnChanged = s.nradOnChanged
+	s.confNRadius.SetValue(25)
+	s.confNRadius.Step = 1
+	contNRadius := container.NewBorder(
+		nil, nil, widget.NewLabel("Nudge radius:"), s.confNRlab,
+		s.confNRadius,
 	)
 
 	contCard := container.NewVBox(
 		contFireNum,
-		contNudge,
-		// contClockLen,
-		// contBlinkCooldown,
-		s.confDrawGrid,
+		contNAmount,
+		contNRadius,
 		s.confApply,
 	)
 	s.confCard = widget.NewCard("Config", "", contCard)
@@ -173,6 +160,14 @@ func (s *mySidebar) confConfigSubmitted(_ string) {
 
 // Checked any checkbutton in the world config card.
 func (s *mySidebar) confConfigChecked(state bool) {
+	s.confRequest = true
+}
+
+// Dragged the nudge radius slider.
+func (s *mySidebar) nradOnChanged(f float64) {
+	fmt.Printf("nradOnChanged = %+v\n", f)
+	s.confNRlab.Text = fmt.Sprintf("%d px", int(f))
+	s.confNRlab.Refresh()
 	s.confRequest = true
 }
 
@@ -242,7 +237,11 @@ func (s *mySidebar) buildReset() *widget.Card {
 		),
 	)
 
-	contCard := container.NewVBox(contCells, contSize, contPer, s.resReset)
+	contCard := container.NewVBox(
+		contCells,
+		contSize,
+		contPer,
+		s.resReset)
 	s.resCard = widget.NewCard("Reset", "", contCard)
 	return s.resCard
 }
@@ -255,6 +254,22 @@ func (s *mySidebar) resResetCB() {
 // Pressed enter on any entry in the world reset card.
 func (s *mySidebar) resResetSubmitted(_ string) {
 	s.resRequest = true
+}
+
+// ##### MISC #####
+
+// Set misc params.
+//
+// * drawCheckerboard
+func (s *mySidebar) buildMisc() *widget.Card {
+	// draw grid
+	s.confDrawGrid = widget.NewCheck("Draw cell grid", s.confConfigChecked)
+
+	contCard := container.NewVBox(
+		s.confDrawGrid,
+	)
+	s.miscCard = widget.NewCard("Misc", "", contCard)
+	return s.miscCard
 }
 
 // --------------------------------------------------------------------------------
@@ -408,8 +423,8 @@ func (a *myApp) configRead(source string) {
 	// get data from entries
 	nF, nFerr := strconv.Atoi(a.s.confFireNum.Text)
 	nA, nAerr := strconv.Atoi(a.s.confNAmount.Text)
-	nR, nRerr := strconv.Atoi(a.s.confNRadius.Text)
-	if nFerr != nil || nAerr != nil || nRerr != nil {
+	nR := int(a.s.confNRadius.Value)
+	if nFerr != nil || nAerr != nil {
 		return
 	}
 	// fmt.Printf("nF, nA, nR = %+v %+v %+v\n", nF, nA, nR)
@@ -489,6 +504,7 @@ func (a *myApp) runApp() {
 	a.buildUI()
 	a.resetWorld()
 	a.s.initSidebar()
+	a.resetWorld()
 	go a.animate()
 	a.mainWin.Resize(fyne.NewSize(1200, 900))
 	a.mainWin.Show()
