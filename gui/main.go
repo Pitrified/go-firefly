@@ -45,11 +45,13 @@ type mySidebar struct {
 	confApply    *widget.Button
 	confFireNum  *widget.Entry
 	confNAmount  *widget.Entry
-	confNRadius  *widget.Slider
 	confNRlab    *widget.Label
+	confNRinc    *widget.Button
+	confNRdec    *widget.Button
 	confDrawGrid *widget.Check
 	confInteract *widget.Check
 	confRequest  bool
+	nudgeRadius  int
 
 	resCard     *widget.Card
 	resReset    *widget.Button
@@ -63,6 +65,7 @@ type mySidebar struct {
 	miscCard   *widget.Card
 	miscFull   *widget.Button
 	miscCredit *widget.Button
+	miscHelp   *widget.Button
 }
 
 func newSidebar(a *myApp) *mySidebar {
@@ -130,15 +133,16 @@ func (s *mySidebar) buildConfig() *widget.Card {
 	)
 
 	// nudge radius
+	s.nudgeRadius = 12 // initialize the value
 	s.confNRlab = widget.NewLabel("")
-	s.confNRadius = widget.NewSlider(0, 50)
-	s.confNRadius.OnChanged = s.nradOnChanged
-	s.confNRadius.SetValue(25)
-	s.confNRadius.Step = 1
+	s.confNRinc = widget.NewButton("+1", s.confNRincCB)
+	s.confNRdec = widget.NewButton("-1", s.confNRdecCB)
+	contNRchange := container.NewGridWithColumns(2, s.confNRdec, s.confNRinc)
 	contNRadius := container.NewBorder(
-		nil, nil, widget.NewLabel("Nudge radius:"), s.confNRlab,
-		s.confNRadius,
+		nil, nil, s.confNRlab, nil,
+		contNRchange,
 	)
+	s.nradOnChanged(0)
 
 	contCard := container.NewVBox(
 		contFireNum,
@@ -165,12 +169,28 @@ func (s *mySidebar) confConfigChecked(state bool) {
 	s.confRequest = true
 }
 
-// Dragged the nudge radius slider.
-func (s *mySidebar) nradOnChanged(f float64) {
-	fmt.Printf("nradOnChanged = %+v\n", f)
-	s.confNRlab.Text = fmt.Sprintf("%d px", int(f))
+// Dragged the nudge radius slider. FIXME
+func (s *mySidebar) nradOnChanged(i int) {
+	fmt.Printf("nradOnChanged = %+v\n", i)
+	// cannot be negative
+	if s.nudgeRadius+i < 0 {
+		return
+	}
+	s.nudgeRadius += i
+	s.confNRlab.Text = fmt.Sprintf("Nudge radius: %d px", s.nudgeRadius)
 	s.confNRlab.Refresh()
 	s.confRequest = true
+}
+
+// Pressed button to increase radius.
+func (s *mySidebar) confNRincCB() {
+	s.nradOnChanged(1)
+}
+
+// Pressed button to decrease radius.
+func (s *mySidebar) confNRdecCB() {
+	s.confRequest = true
+	s.nradOnChanged(-1)
 }
 
 // ##### RESET #####
@@ -270,9 +290,14 @@ func (s *mySidebar) buildMisc() *widget.Card {
 	s.miscFull = widget.NewButton("Fullscreen", s.toggleFullscreen)
 	// credits window
 	s.miscCredit = widget.NewButton("Credits", s.miscCreditCB)
+	// help window
+	s.miscHelp = widget.NewButton("Help", s.miscHelpCB)
 
 	contCard := container.NewVBox(
-		s.confDrawGrid,
+		container.NewGridWithColumns(2,
+			s.confDrawGrid,
+			s.miscHelp,
+		),
 		container.NewGridWithColumns(2,
 			s.miscFull,
 			s.miscCredit,
@@ -301,6 +326,26 @@ func (s *mySidebar) miscCreditCB() {
 			w.Close()
 		}
 	})
+	w.Show()
+}
+
+// Clicked button show help.
+func (s *mySidebar) miscHelpCB() {
+	w := s.a.fyneApp.NewWindow("Help")
+	w.Canvas().SetOnTypedKey(func(ev *fyne.KeyEvent) {
+		if ev.Name == fyne.KeyEscape {
+			w.Close()
+		}
+	})
+	explanation := widget.NewLabel(
+		"Try increasing the nudge radius until the swarm start synchronizing.")
+	explanation.Wrapping = fyne.TextWrapWord
+	w.SetContent(
+		container.NewVBox(
+			explanation,
+		),
+	)
+	w.Resize(fyne.NewSize(400, 150))
 	w.Show()
 }
 
@@ -455,7 +500,7 @@ func (a *myApp) configRead(source string) {
 	// get data from entries
 	nF, nFerr := strconv.Atoi(a.s.confFireNum.Text)
 	nA, nAerr := strconv.Atoi(a.s.confNAmount.Text)
-	nR := int(a.s.confNRadius.Value)
+	nR := a.s.nudgeRadius
 	if nFerr != nil || nAerr != nil {
 		return
 	}
@@ -466,6 +511,7 @@ func (a *myApp) configRead(source string) {
 	// to stop the interaction set the redius to 0
 	if a.doInteraction {
 		a.nudgeRadius = float32(nR)
+		// fmt.Printf("nrad value = %+v\n", a.nudgeRadius)
 	} else {
 		a.nudgeRadius = 0
 	}
