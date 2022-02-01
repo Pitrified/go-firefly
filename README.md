@@ -14,3 +14,9 @@ But the size of the swarm can only reach 500.
 Rookie numbers.
 
 We want to simulate 1.000.000+ fireflies.
+
+# Sample
+
+Click on the image to see a very blurry video of the simulator in action.
+
+[![Sample interaction](./sample/sample20k_01.png)](https://www.youtube.com/watch?v=rE-RGsmU51k "Sample interaction")
