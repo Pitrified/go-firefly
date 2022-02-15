@@ -5,22 +5,30 @@
 * Draw circle if requested
 * Stats? Graph? Time?
 
+* Create folder with start timestamp
+
 * The size of the world can be smaller than 4K, we render it in high quality
 * Param for scale, check if the requested resolution fits
 * Use labels for common res
 
+* First you scale up then you quantize the position
+
 ```
   3.840 = 2^8 × 3 × 5    ;   2.160 = 2^4 × 3^3 × 5
 
-( 3.840 = 120 * 32 ) * 1 ; ( 2.160 = 120 * 1 ) * 18
-( 3.840 = 240 * 16 ) * 1 ; ( 2.160 = 240 * 1 ) *  9
-( 1.920 = 120 * 16 ) * 2 ; ( 1.080 = 120 * 2 ) *  9
-( 1.280 =  80 * 16 ) * 3 ; (   720 =  80 * 3 ) *  9
-(   960 =  60 * 16 ) * 4 ; (   540 = 120 * 4 ) *  9
-(   768 =  48 * 16 ) * 5 ; (   432 =  48 * 5 ) *  9
-(   640 =  40 * 16 ) * 6 ; (   360 =  40 * 6 ) *  9
+( 3.840 = 120 * 32 ) * 1 ; ( 2.160 = 120 * 18 ) * 1
+( 3.840 = 240 * 16 ) * 1 ; ( 2.160 = 240 *  9 ) * 1
+( 1.920 = 120 * 16 ) * 2 ; ( 1.080 = 120 *  9 ) * 2
+( 1.280 =  80 * 16 ) * 3 ; (   720 =  80 *  9 ) * 3
+(   960 =  60 * 16 ) * 4 ; (   540 = 120 *  9 ) * 4
+(   768 =  48 * 16 ) * 5 ; (   432 =  48 *  9 ) * 5
+(   640 =  40 * 16 ) * 6 ; (   360 =  40 *  9 ) * 6
     ^      ^           ^
-    |      |           |- scale factor
-    |      |-    cell size
-    |- world size
+    |      |           ╵- scale factor
+    |      ╵- cell size
+    ╵- world size
 ```
+
+* bmp of the fireflies in several directions
+* Use HCL https://github.com/lucasb-eyer/go-colorful
+* Save min and max L value for each pixel
