@@ -54,4 +54,6 @@ func main() {
 		*filmDuration,
 		*drawCircle,
 	)
+
+	tryColorful()
 }

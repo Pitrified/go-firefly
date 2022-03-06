@@ -32,3 +32,7 @@
 * bmp of the fireflies in several directions
 * Use HCL https://github.com/lucasb-eyer/go-colorful
 * Save min and max L value for each pixel
+
+1. Max/min HCL map
+2. Cache all templates
+3. Implement blitting of rotated/shifted templates on larger image
