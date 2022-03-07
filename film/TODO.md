@@ -1,4 +1,4 @@
-# TODOs
+# IDEAs
 
 * CLI
 * Some way to monitor the blink on terminal
@@ -33,6 +33,19 @@
 * Use HCL https://github.com/lucasb-eyer/go-colorful
 * Save min and max L value for each pixel
 
+### Image to video
+* https://stackoverflow.com/questions/46397240/ffmpeg-image2pipe-producing-broken-video
+* https://github.com/leixiaohua1020/simplest_ffmpeg_video_encoder
+
+
+# TODOs
+
 1. Max/min HCL map
 2. Cache all templates
 3. Implement blitting of rotated/shifted templates on larger image
+
+
+* Create a grid with the colors blended (https://github.com/lucasb-eyer/go-colorful#blending-colors)
+* or a preview of the glowing fireflies
+* method GetBlent(t) that returns the blended color?
+
