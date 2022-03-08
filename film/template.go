@@ -150,17 +150,41 @@ func tryColorful() {
 	}
 	SavePNG("testHSV.png", img)
 
+	img = image.NewRGBA(image.Rect(0, 0, 360, 100))
+	s := 0.7
+	for i := 0; i < 360; i++ {
+		for ii := 0; ii < 100; ii++ {
+			H := float64(i)
+			l := float64(ii) / 100
+			col := colorful.Hsv(H, s, l)
+			img.SetRGBA(i, ii, color.RGBA{uint8(col.R * 255), uint8(col.G * 255), uint8(col.B * 255), 255})
+		}
+	}
+	SavePNG("testHsvHue.png", img)
+
 	img = image.NewRGBA(image.Rect(0, 0, 100, 100))
 	H = 60.0
 	for i := 0; i <= 100; i++ {
 		for ii := 0; ii < 100; ii++ {
 			s := float64(i) / 100
-			v := float64(ii) / 100
-			col := colorful.HSLuv(H, s, v)
+			l := float64(ii) / 100
+			col := colorful.HSLuv(H, s, l)
 			img.SetRGBA(i, ii, color.RGBA{uint8(col.R * 255), uint8(col.G * 255), uint8(col.B * 255), 255})
 		}
 	}
 	SavePNG("testHSLuv.png", img)
+
+	img = image.NewRGBA(image.Rect(0, 0, 360, 100))
+	s = 0.7
+	for i := 0; i < 360; i++ {
+		for ii := 0; ii < 100; ii++ {
+			H := float64(i)
+			l := float64(ii) / 100
+			col := colorful.HSLuv(H, s, l)
+			img.SetRGBA(i, ii, color.RGBA{uint8(col.R * 255), uint8(col.G * 255), uint8(col.B * 255), 255})
+		}
+	}
+	SavePNG("testHSLuvHue.png", img)
 }
 
 func SavePNG(name string, img image.Image) {
