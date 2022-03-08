@@ -33,7 +33,10 @@
 * Use HCL https://github.com/lucasb-eyer/go-colorful
 * Save min and max L value for each pixel
 
+* We are using sane colorspaces _specifically_ to have uniform luminosity bro
+
 ### Image to video
+
 * https://stackoverflow.com/questions/46397240/ffmpeg-image2pipe-producing-broken-video
 * https://github.com/leixiaohua1020/simplest_ffmpeg_video_encoder
 

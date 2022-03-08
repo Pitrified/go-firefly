@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"image/draw"
 	"image/png"
 	"os"
 
 	"github.com/lucasb-eyer/go-colorful"
+	"golang.org/x/image/draw"
 )
 
 // CIE-L*C*h° (HCL): This is generally the most useful one; CIE-L*a*b* space in
@@ -41,35 +41,32 @@ type RangeColorHCL struct {
 
 func NewRangeColorHCL(H, C, Lh, Ll float64) *RangeColorHCL {
 	r := &RangeColorHCL{
-		H:     H,
-		C:     C,
-		Lh:    Lh,
-		Ll:    Ll,
-		cHCLh: colorful.Hcl(H, C, Lh),
-		cHCLl: colorful.Hcl(H, C, Ll),
+		H:  H,
+		C:  C,
+		Lh: Lh,
+		Ll: Ll,
+		// cHCLh: colorful.Hcl(H, C, Lh),
+		// cHCLl: colorful.Hcl(H, C, Ll),
+		cHCLh: colorful.HSLuv(H, C, Lh),
+		cHCLl: colorful.HSLuv(H, C, Ll),
 	}
 	return r
 }
 
 // Get the blent color.
 func (r *RangeColorHCL) GetBlent(t float64) colorful.Color {
-	return r.cHCLh.BlendHcl(r.cHCLl, t)
+	// return r.cHCLh.BlendHcl(r.cHCLl, t)
+	return r.cHCLl.BlendLuvLCh(r.cHCLh, t)
 }
 
 var elemColor = map[byte]*RangeColorHCL{
-	'H': NewRangeColorHCL(40, 0.7, 0.7, 0.7),   // Head
+	'H': NewRangeColorHCL(20, 0.5, 0.7, 0.7),   // Head
 	'B': NewRangeColorHCL(36, 0.5, 0.01, 0.01), // Body
 	'O': NewRangeColorHCL(55, 0.9, 0.7, 0.2),   // bOdy glowing
-	'W': NewRangeColorHCL(90, 0.7, 0.7, 0.7),   // Wings
-	'I': NewRangeColorHCL(120, 0.7, 0.7, 0.2),  // wIngs glowing
-	'A': NewRangeColorHCL(60, 0.7, 0.7, 0.7),   // bAckground
-	'C': NewRangeColorHCL(180, 0.7, 0.7, 0.2),  // baCkground glowing
-	// 'a': NewRangeColorHCL(180, 1, 0.7, 0.2),   // baCkground glowing
-	// 'b': NewRangeColorHCL(180, 0.7, 0.7, 0.2), // baCkground glowing
-	// 'c': NewRangeColorHCL(180, 0.5, 0.7, 0.2), // baCkground glowing
-	// 'd': NewRangeColorHCL(180, 0.3, 0.7, 0.2), // baCkground glowing
-	// 'e': NewRangeColorHCL(180, 0.2, 0.7, 0.2), // baCkground glowing
-	// 'f': NewRangeColorHCL(180, 0.1, 0.7, 0.2), // baCkground glowing
+	'W': NewRangeColorHCL(240, 0.7, 0.7, 0.7),  // Wings
+	'I': NewRangeColorHCL(240, 0.7, 0.7, 0.2),  // wIngs glowing
+	'A': NewRangeColorHCL(0, 0.0, 0.2, 0.2),    // bAckground
+	'C': NewRangeColorHCL(0, 0.0, 0.4, 0.2),    // baCkground glowing
 }
 
 var templateFirefly = [][]byte{
@@ -81,7 +78,7 @@ var templateFirefly = [][]byte{
 var templateFireflyLarge = [][]byte{
 	{'A', 'A', 'H', 'A', 'A'},
 	{'W', 'W', 'B', 'W', 'W'},
-	{'W', 'W', 'O', 'W', 'W'},
+	{'W', 'I', 'O', 'I', 'W'},
 	{'W', 'C', 'O', 'C', 'W'},
 	{'A', 'C', 'O', 'C', 'A'},
 }
@@ -181,10 +178,69 @@ func tryColorful() {
 			H := float64(i)
 			l := float64(ii) / 100
 			col := colorful.HSLuv(H, s, l)
-			img.SetRGBA(i, ii, color.RGBA{uint8(col.R * 255), uint8(col.G * 255), uint8(col.B * 255), 255})
+			// img.SetRGBA(i, ii, color.RGBA{uint8(col.R * 255), uint8(col.G * 255), uint8(col.B * 255), 255})
+			r, g, b := col.Clamped().RGB255()
+			// r, g, b := col.RGB255()
+			img.SetRGBA(i, ii, color.RGBA{r, g, b, 255})
 		}
 	}
 	SavePNG("testHSLuvHue.png", img)
+
+	img = image.NewRGBA(image.Rect(0, 0, 360, 100))
+	s = 0.7
+	for i := 0; i < 360; i++ {
+		for ii := 0; ii < 100; ii++ {
+			H := float64(i)
+			l := float64(ii) / 100
+			col := colorful.HSLuv(H, s, l)
+			blend := col.BlendHcl(col, 1)
+			// img.SetRGBA(i, ii, color.RGBA{uint8(col.R * 255), uint8(col.G * 255), uint8(col.B * 255), 255})
+			r, g, b := blend.Clamped().RGB255()
+			// r, g, b := col.RGB255()
+			img.SetRGBA(i, ii, color.RGBA{r, g, b, 255})
+		}
+	}
+	SavePNG("testHSLuvHueBlendedHCL.png", img)
+
+	img = image.NewRGBA(image.Rect(0, 0, 360, 100))
+	s = 0.7
+	for i := 0; i < 360; i++ {
+		for ii := 0; ii < 100; ii++ {
+			H := float64(i)
+			l := float64(ii) / 100
+			col := colorful.HSLuv(H, s, l)
+			blend := col.BlendLuvLCh(col, 1)
+			// img.SetRGBA(i, ii, color.RGBA{uint8(col.R * 255), uint8(col.G * 255), uint8(col.B * 255), 255})
+			r, g, b := blend.Clamped().RGB255()
+			// r, g, b := col.RGB255()
+			img.SetRGBA(i, ii, color.RGBA{r, g, b, 255})
+		}
+	}
+	SavePNG("testHSLuvHueBlendedLuvLCh.png", img)
+
+	tmp := templateFireflyLarge
+	// tmp := templateFirefly
+	steps := 11
+	fireflyImg := image.NewRGBA(image.Rect(0, 0, len(tmp)*steps, len(tmp[0])))
+	fmt.Printf("size = %vx%v\n", len(tmp), len(tmp[0]))
+	for ti := 0; ti < steps; ti++ {
+		for i := 0; i < len(tmp); i++ {
+			for ii := 0; ii < len(tmp[0]); ii++ {
+				key := tmp[i][ii]
+				blend := elemColor[key].GetBlent(float64(ti) * 0.1)
+				fmt.Printf("i, ii, blend = %vx%v : %+v\n", i, ii, blend)
+				r, g, b := blend.Clamped().RGB255()
+				fireflyImg.SetRGBA(ii+len(tmp)*ti, i, color.RGBA{r, g, b, 255})
+			}
+		}
+
+	}
+	SavePNG("testFirefly.png", fireflyImg)
+	pixSize := 50
+	largeSize := image.Rect(0, 0, len(tmp)*pixSize*steps, len(tmp[0])*pixSize)
+	dst := image.NewRGBA(largeSize)
+	draw.NearestNeighbor.Scale(dst, largeSize, fireflyImg, fireflyImg.Bounds(), draw.Over, nil)
+	SavePNG("testUpscaledFirefly.png", dst)
 }
 
 func SavePNG(name string, img image.Image) {
@@ -197,3 +253,6 @@ func SavePNG(name string, img image.Image) {
 
 	png.Encode(toimg, img)
 }
+
+// rescale image
+// https://gist.github.com/logrusorgru/570d64fd6a051e0441014387b89286ca
