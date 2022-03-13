@@ -11,7 +11,7 @@
 * Param for scale, check if the requested resolution fits
 * Use labels for common res
 
-* First you scale up then you quantize the position
+* First you scale up then you quantize the position.
 
 ```
   3.840 = 2^8 × 3 × 5    ;   2.160 = 2^4 × 3^3 × 5
@@ -51,4 +51,3 @@
 * Create a grid with the colors blended (https://github.com/lucasb-eyer/go-colorful#blending-colors)
 * or a preview of the glowing fireflies
 * method GetBlent(t) that returns the blended color?
-
