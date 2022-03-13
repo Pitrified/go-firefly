@@ -55,5 +55,6 @@ func main() {
 		*drawCircle,
 	)
 
-	tryColorful()
+	// TryColorful()
+	GenBlitMap()
 }
