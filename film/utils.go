@@ -27,3 +27,9 @@ func UpscaleImg(img image.Image, pixSize int) *image.RGBA {
 	draw.NearestNeighbor.Scale(dst, largeSize, img, img.Bounds(), draw.Src, nil)
 	return dst
 }
+
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
+}

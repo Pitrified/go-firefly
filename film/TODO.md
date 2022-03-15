@@ -13,6 +13,8 @@
 
 * First you scale up then you quantize the position.
 
+* `elemColor/templateFirefly` should be in a separate file `const.go`
+
 ```
   3.840 = 2^8 × 3 × 5    ;   2.160 = 2^4 × 3^3 × 5
 
