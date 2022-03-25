@@ -7,65 +7,121 @@ import (
 	"github.com/lucasb-eyer/go-colorful"
 )
 
-// Hue in [0..360], Saturation and Luminance in [0..1].
-type RangeColorHSL struct {
-	H, S, Lh, Ll float64
-	cHSLh, cHSLl colorful.Color
+type RangeColorHCL struct {
+	H, C, Lh, Ll float64
+	cHCLh, cHCLl colorful.Color
 }
 
-func NewRangeColorHSL(H, S, Lh, Ll float64) *RangeColorHSL {
-	r := &RangeColorHSL{
-		H:     H,
-		S:     S,
-		Lh:    Lh,
-		Ll:    Ll,
-		cHSLh: colorful.HSLuv(H, S, Lh),
-		cHSLl: colorful.HSLuv(H, S, Ll),
+func NewRangeColorHCL(H, C, Lh, Ll float64) *RangeColorHCL {
+	r := &RangeColorHCL{
+		H:  H,
+		C:  C,
+		Lh: Lh,
+		Ll: Ll,
+		// cHCLh: colorful.Hcl(H, C, Lh),
+		// cHCLl: colorful.Hcl(H, C, Ll),
+		cHCLh: colorful.HSLuv(H, C, Lh),
+		cHCLl: colorful.HSLuv(H, C, Ll),
 	}
 	return r
 }
 
 // Get the blent color.
-// https://github.com/lucasb-eyer/go-colorful/issues/14#issuecomment-324205385
-func (r *RangeColorHSL) GetBlent(t float64) colorful.Color {
-	return r.cHSLl.BlendLuvLCh(r.cHSLh, t)
+func (r *RangeColorHCL) GetBlent(t float64) colorful.Color {
+	// return r.cHCLh.BlendHcl(r.cHCLl, t)
+	return r.cHCLl.BlendLuvLCh(r.cHCLh, t)
 }
 
-var elemColor = map[byte]*RangeColorHSL{
-	'H': NewRangeColorHSL(20, 0.5, 0.5, 0.3),   // Head
-	'B': NewRangeColorHSL(36, 0.5, 0.01, 0.01), // Body
-	'O': NewRangeColorHSL(55, 0.9, 0.7, 0.2),   // bOdy glowing
-	'W': NewRangeColorHSL(240, 0.7, 0.2, 0.2),  // Wings
-	'I': NewRangeColorHSL(240, 0.7, 0.7, 0.2),  // wIngs glowing
-	'A': NewRangeColorHSL(0, 0.0, 0.2, 0.2),    // bAckground
-	'C': NewRangeColorHSL(0, 0.0, 0.4, 0.2),    // baCkground glowing
+var elemColor = map[byte]*RangeColorHCL{
+	'h': NewRangeColorHCL(20, 0.5, 0.7, 0.2),   // head
+	'b': NewRangeColorHCL(36, 0.5, 0.01, 0.01), // body
+	'B': NewRangeColorHCL(55, 0.9, 0.7, 0.2),   // Body glowing
+	'w': NewRangeColorHCL(240, 0.7, 0.2, 0.2),  // wings
+	'W': NewRangeColorHCL(240, 0.7, 0.7, 0.2),  // Wings glowing
+	'a': NewRangeColorHCL(0, 0.0, 0.2, 0.2),    // background
+	'A': NewRangeColorHCL(0, 0.0, 0.4, 0.2),    // bAckground glowing
+	'1': NewRangeColorHCL(55, 0.9, 0.7, 0.2),   // just glow a bit
+	'2': NewRangeColorHCL(55, 0.9, 0.6, 0.18),  // just glow a bit
+	'3': NewRangeColorHCL(55, 0.9, 0.5, 0.16),  // just glow a bit
+	'4': NewRangeColorHCL(55, 0.9, 0.4, 0.14),  // just glow a bit
+	'5': NewRangeColorHCL(55, 0.9, 0.3, 0.12),  // just glow a bit
+	'6': NewRangeColorHCL(55, 0.9, 0.2, 0.1),   // just glow a bit
+	'7': NewRangeColorHCL(55, 0.9, 0.1, 0.08),  // just glow a bit
+}
+
+// firefly templates
+var TemplateFirefly3 = [][][]byte{
+	{
+		{'a', 'h', 'a'},
+		// {'w', 'b', 'w'},
+		{'W', 'B', 'W'},
+		{'W', 'B', 'W'},
+	},
+	{
+		// {'a', 'W', 'h'},
+		// {'W', 'B', 'W'},
+		// {'B', 'W', 'a'},
+		{'W', 'W', 'h'},
+		{'a', 'B', 'W'},
+		{'B', 'a', 'W'},
+	},
+}
+
+var TemplateSpherical5 = [][][]byte{
+	{
+		{'5', '4', '4', '4', '5'},
+		{'4', '3', '2', '3', '4'},
+		{'4', '2', '1', '2', '4'},
+		{'4', '3', '2', '3', '4'},
+		{'5', '4', '4', '4', '5'},
+	},
+}
+
+var TemplateFirefly5 = [][][]byte{
+	{
+		{'a', 'a', 'h', 'a', 'a'},
+		{'W', 'W', 'b', 'W', 'W'},
+		{'W', 'W', 'B', 'W', 'W'},
+		{'W', 'A', 'B', 'A', 'W'},
+		{'a', 'A', 'B', 'A', 'a'},
+	},
+	{
+		{'W', 'W', 'W', 'a', 'h'},
+		{'a', 'W', 'W', 'b', 'a'},
+		{'a', 'A', 'B', 'W', 'W'},
+		{'A', 'B', 'A', 'W', 'W'},
+		{'B', 'A', 'a', 'a', 'W'},
+	},
+}
+
+// orientation and lightness level
+func findBlitPos(o int16, l, templateSize, rotNum int) (int, int) {
+
+	sectorSize := int16(90 / rotNum)
+
+	tO := o + sectorSize/2
+	if tO > 360 {
+		tO -= 360
+	}
+	rotI := tO / sectorSize
+
+	return l * templateSize, int(rotI) * templateSize
 }
 
 // Generate an image with all the needed fireflies to use.
 // horizontal change the luminosity
 // vertical change the rotation
-func genBlitMap() *image.RGBA {
+func genBlitMap(lLevels int, whichTemplate string) *image.RGBA {
 
-	// firefly templates
-	templateFirefly := [][][]byte{
-		{
-			{'A', 'H', 'A'},
-			// {'W', 'B', 'W'},
-			{'I', 'O', 'I'},
-			{'I', 'O', 'I'},
-		},
-		{
-			// {'A', 'I', 'H'},
-			// {'I', 'O', 'I'},
-			// {'O', 'I', 'A'},
-			{'I', 'I', 'H'},
-			{'A', 'O', 'I'},
-			{'O', 'A', 'I'},
-		},
+	var templateFirefly [][][]byte
+	switch whichTemplate {
+	case "F3":
+		templateFirefly = TemplateFirefly3
+	case "F5":
+		templateFirefly = TemplateFirefly5
+	case "L5":
+		templateFirefly = TemplateSpherical5
 	}
-
-	// number of lightness levels (-1 as it is inclusive)
-	lLevels := 100
 
 	numTemplates := len(templateFirefly)
 	fSize := len(templateFirefly[0])
