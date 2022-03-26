@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image"
 	"image/png"
+	"math"
 	"os"
 
 	"golang.org/x/image/draw"
@@ -26,6 +27,16 @@ func UpscaleImg(img image.Image, pixSize int) *image.RGBA {
 	dst := image.NewRGBA(largeSize)
 	draw.NearestNeighbor.Scale(dst, largeSize, img, img.Bounds(), draw.Src, nil)
 	return dst
+}
+
+// brightness goes from 1 to 0, according to decay constant
+// tau = 1 / decay
+// https://www.wolframalpha.com/input/?i=e+**+%28+-x+*+1%2F50+%29+for+0+%3C+x+%3C+250
+func Brightness(x int, decay float64) float64 {
+	if x < 0 {
+		return 0
+	}
+	return math.Exp(-float64(x) * decay)
 }
 
 func check(e error) {

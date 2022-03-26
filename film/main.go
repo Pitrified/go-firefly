@@ -7,87 +7,201 @@ import (
 	"image/draw"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/Pitrified/go-firefly"
+	"github.com/lucasb-eyer/go-colorful"
 )
 
-func film(
+type Filmer struct {
+
+	// input
+	cellSize, cw, ch int
+	nudgeRadius      int
+	nF               int
+	filmDuration     int
+	drawCircle       bool
+
+	// utils
+	blitTemplate  *image.RGBA
+	backCol       colorful.Color
+	w             *firefly.World
+	fps           int
+	scale         int
+	frameSize     image.Rectangle
+	outputFolder  string
+	renderWG      sync.WaitGroup
+	decay         float64
+	lLevels       int
+	templateSize  int
+	rotNum        int
+	whichTemplate string
+
+	// misc
+	clockTickLen  int
+	blinkCooldown int
+	nudgeAmount   int
+	periodMin     int
+	periodMax     int
+}
+
+func NewFilmer(
 	cellSize, cw, ch,
 	nudgeRadius,
 	nF,
 	filmDuration int,
 	drawCircle bool,
-) {
+) *Filmer {
+
+	f := &Filmer{}
+
+	f.cellSize = cellSize
+	f.cw = cw
+	f.ch = ch
+	f.nudgeRadius = nudgeRadius
+	f.nF = nF
+	f.filmDuration = filmDuration
+	f.drawCircle = drawCircle
+
+	return f
+}
+
+func (f *Filmer) film() {
 
 	// various simulation params
-	clockTickLen := 25_000
-	blinkCooldown := 500_000
-	nudgeAmount := 20_000
-	periodMin := 900_000
-	periodMax := 1_100_000
+	f.clockTickLen = 25_000
+	f.blinkCooldown = 500_000
+	f.nudgeAmount = 20_000
+	f.periodMin = 900_000
+	f.periodMax = 1_100_000
 
-	// decay = 1.0 / 600_000.0
+	// f.whichTemplate = "F3"
+	f.whichTemplate = "F5"
+	// f.whichTemplate = "L5"
+
 	// rand.Seed(time.Now().UnixNano())
+	f.decay = 1.0 / 600_000.0
 
 	// film parameters
-	fps := 25
-	scale := 3
-	frameSize := image.Rect(0, 0, cw*cellSize*scale, ch*cellSize*scale)
+	f.fps = 25
+	// TODO this might also be linked to which template you are using
+	f.scale = 1
+	f.frameSize = image.Rect(0, 0, f.cw*f.cellSize*f.scale, f.ch*f.cellSize*f.scale)
 
 	// path
 	// outputFolder := fmt.Sprintf("film_%v", time.Now().Unix())
-	outputFolder := fmt.Sprintf("film_%v", 0)
-	fmt.Printf("outputFolder = %+v\n", outputFolder)
-	err := os.Mkdir(outputFolder, 0755)
+	f.outputFolder = fmt.Sprintf("film_%v", 0)
+	fmt.Printf("outputFolder = %+v\n", f.outputFolder)
+	err := os.RemoveAll(f.outputFolder)
+	check(err)
+	err = os.Mkdir(f.outputFolder, 0755)
 	check(err)
 
+	// number of lightness levels (-1 as it is inclusive)
+	f.lLevels = 100
 	// setup the blit map
-	// fireflyBlit := genBlitMap()
+	f.blitTemplate = genBlitMap(f.lLevels, f.whichTemplate)
+	// TODO this is dependent on which template you are using
+	switch f.whichTemplate {
+	case "F3":
+		f.templateSize = 3
+		f.rotNum = 2
+	case "L5":
+		f.templateSize = 5
+		f.rotNum = 1
+	case "F5":
+		f.templateSize = 5
+		f.rotNum = 2
+	}
 
 	// background color
-	backCol := elemColor['A'].GetBlent(1)
+	f.backCol = elemColor['a'].GetBlent(1)
 
 	// start world
-	w := firefly.NewWorld(
-		cw, ch, float32(cellSize),
-		1_000_000, clockTickLen,
-		nudgeAmount, float32(nudgeRadius),
-		blinkCooldown,
-		periodMin, periodMax,
+	f.w = firefly.NewWorld(
+		f.cw, f.ch, float32(f.cellSize),
+		1_000_000, f.clockTickLen,
+		f.nudgeAmount, float32(f.nudgeRadius),
+		f.blinkCooldown,
+		f.periodMin, f.periodMax,
 	)
-	w.HatchFireflies(nF)
+	f.w.HatchFireflies(f.nF)
 
-	for frameI := 0; frameI < filmDuration*fps; frameI++ {
+	for frameI := 0; frameI < f.filmDuration*f.fps; frameI++ {
 
 		// ########## //
 		//   render   //
 		// ########## //
 
-		img := image.NewRGBA(frameSize)
-
-		// fill background
-		draw.Draw(
-			img, img.Bounds(),
-			&image.Uniform{backCol},
-			image.Point{0, 0},
-			draw.Src,
-		)
-
-		// save the frame
-		frameName := fmt.Sprintf("frame_%06d.png", frameI)
-		fmt.Printf("frameName = %+v\n", frameName)
-		framePath := filepath.Join(outputFolder, frameName)
-		SavePNG(framePath, img)
+		fmt.Printf("render frameI = %+v\n", frameI)
+		f.renderFrame(frameI)
 
 		// ########## //
 		//  simulate  //
 		// ########## //
 
-		if frameI == 0 {
+		fmt.Printf("simulate frameI = %+v\n", frameI)
+		// f.w.DoStep <- 'M'
+		f.w.Move()
+		f.w.ClockTick()
+
+		if frameI == 10 {
 			break
 		}
 	}
+}
 
+func (f *Filmer) renderFrame(frameI int) {
+
+	img := image.NewRGBA(f.frameSize)
+
+	// fill background
+	draw.Draw(
+		img, img.Bounds(),
+		&image.Uniform{f.backCol},
+		image.Point{0, 0},
+		draw.Src,
+	)
+
+	// draw each cell
+	for i := 0; i < f.w.CellWNum; i++ {
+		for ii := 0; ii < f.w.CellHNum; ii++ {
+			f.renderWG.Add(1)
+			go f.renderCell(f.w.Cells[i][ii], img)
+		}
+	}
+	f.renderWG.Wait()
+
+	// save the frame
+	frameName := fmt.Sprintf("frame_%06d.png", frameI)
+	fmt.Printf("frameName = %+v\n", frameName)
+	framePath := filepath.Join(f.outputFolder, frameName)
+	SavePNG(framePath, img)
+}
+
+func (F *Filmer) renderCell(c *firefly.Cell, m *image.RGBA) {
+
+	for _, f := range c.Fireflies {
+		// blit the right firefly in the right place
+
+		// get the lightness level
+		since := F.w.Clock - (f.NextBlink - f.Period)
+		br := Brightness(since, F.decay)
+		lLev := int(br * float64(F.lLevels))
+
+		// find the corner of the rect in the source (template) image
+		bX, bY := findBlitPos(f.O, lLev, F.templateSize, F.rotNum)
+		// rectangle in the source image
+		sr := image.Rect(bX, bY, bX+F.templateSize, bY+F.templateSize)
+		// corner of the rect in the dest image
+		dp := image.Pt(int(f.X*float32(F.scale)), int(f.Y*float32(F.scale)))
+		// rectangle in the dest image
+		dr := image.Rectangle{dp, dp.Add(sr.Size())}
+		draw.Draw(m, dr, F.blitTemplate, sr.Min, draw.Src)
+
+	}
+
+	F.renderWG.Done()
 }
 
 func main() {
@@ -113,12 +227,13 @@ func main() {
 	fmt.Println("fd    :", *filmDuration)
 	fmt.Println("dc    :", *drawCircle)
 
-	film(
-		*cellSize,
-		*cw, *ch,
+	f := NewFilmer(
+		*cellSize, *cw, *ch,
 		*nudgeRadius,
 		*nF,
 		*filmDuration,
 		*drawCircle,
 	)
+
+	f.film()
 }
