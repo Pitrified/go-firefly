@@ -80,6 +80,25 @@ func TestMoveWrap(t *testing.T) {
 	}
 }
 
+func TestMoveWrapRectangular(t *testing.T) {
+	w := NewWorld(11, 13, 100, 1_000_000, 25_000, 50_000, 50, 500_000, 900_000, 1_1000_000)
+
+	cases := []struct {
+		cx, cy, dcx, dcy, nx, ny int
+	}{
+		{0, 0, 0, 0, 0, 0},
+		{0, 0, -1, -1, 10, 12},
+		{0, 0, -1 - 11*3, -1 - 13*3, 10, 12},
+		{0, 0, 11, 13, 0, 0},
+		{0, 0, 11 * 3, 13 * 3, 0, 0},
+	}
+	for _, c := range cases {
+		gotX, gotY := w.MoveWrapCell(c.cx, c.cy, c.dcx, c.dcy)
+		assert.Equal(t, gotX, c.nx, fmt.Sprintf("Failed case X %+v, got %+v", c, gotX))
+		assert.Equal(t, gotY, c.ny, fmt.Sprintf("Failed case Y %+v, got %+v", c, gotY))
+	}
+}
+
 func TestValidatePos(t *testing.T) {
 	w := NewWorld(10, 10, 100, 1_000_000, 25_000, 50_000, 50, 500_000, 900_000, 1_1000_000)
 

@@ -231,10 +231,10 @@ func (w *World) MoveWrapCell(cx, cy, dcx, dcy int) (int, int) {
 	}
 	cy += dcy
 	for cy < 0 {
-		cy += w.CellWNum
+		cy += w.CellHNum
 	}
-	for cy >= w.CellWNum {
-		cy -= w.CellWNum
+	for cy >= w.CellHNum {
+		cy -= w.CellHNum
 	}
 	return cx, cy
 }
