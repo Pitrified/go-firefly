@@ -145,7 +145,7 @@ func (f *Filmer) film() {
 		f.w.Move()
 		f.w.ClockTick()
 
-		if frameI == 10 {
+		if frameI == 100 {
 			break
 		}
 	}
@@ -189,8 +189,10 @@ func (F *Filmer) renderCell(c *firefly.Cell, m *image.RGBA) {
 		br := Brightness(since, F.decay)
 		lLev := int(br * float64(F.lLevels))
 
+		// go from firefly to template reference system
+		remappedOri := remapOri(f.O)
 		// find the corner of the rect in the source (template) image
-		bX, bY := findBlitPos(f.O, lLev, F.templateSize, F.rotNum)
+		bX, bY := findBlitPos(remappedOri, lLev, F.templateSize, F.rotNum)
 		// rectangle in the source image
 		sr := image.Rect(bX, bY, bX+F.templateSize, bY+F.templateSize)
 		// corner of the rect in the dest image

@@ -108,6 +108,31 @@ func findBlitPos(o int16, l, templateSize, rotNum int) (int, int) {
 	return l * templateSize, int(rotI) * templateSize
 }
 
+func remapOri(o int16) int16 {
+	// screen | fire
+	// 0   0  | 90
+	// 45  1  | 45
+	// 90  2  | 0
+	// 135 3  | -45  315
+	// 180 4  | -90  270
+	// 225 5  | -135 225
+	// 270 6  | -180 180
+	// 315 7  | -225 135
+
+	remappedOri := -o + 90
+	// fmt.Printf("o = %+v remappedOri = %+v\n", o, remappedOri)
+
+	for remappedOri < 0 {
+		remappedOri += 360
+	}
+	for remappedOri > 360 {
+		remappedOri -= 360
+	}
+
+	return remappedOri
+
+}
+
 // Generate an image with all the needed fireflies to use.
 // horizontal change the luminosity
 // vertical change the rotation
