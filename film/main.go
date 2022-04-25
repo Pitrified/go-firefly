@@ -90,7 +90,7 @@ func (f *Filmer) film() {
 
 	// path
 	// outputFolder := fmt.Sprintf("film_%v", time.Now().Unix())
-	f.outputFolder = fmt.Sprintf("film_%v", 0)
+	f.outputFolder = fmt.Sprintf("film_%v", 2)
 	fmt.Printf("outputFolder = %+v\n", f.outputFolder)
 	err := os.RemoveAll(f.outputFolder)
 	check(err)
@@ -125,15 +125,15 @@ func (f *Filmer) film() {
 		f.blinkCooldown,
 		f.periodMin, f.periodMax,
 	)
-	// f.w.HatchFireflies(f.nF)
-	firefly.NewFirefly(100, 100, 0, 0, 1000000, f.w)
-	firefly.NewFirefly(100, 110, 45, 1, 1000000, f.w)
-	firefly.NewFirefly(90, 110, 90, 2, 1000000, f.w)
-	firefly.NewFirefly(80, 110, 135, 3, 1000000, f.w)
-	firefly.NewFirefly(80, 100, 180, 4, 1000000, f.w)
-	firefly.NewFirefly(80, 90, 225, 5, 1000000, f.w)
-	firefly.NewFirefly(90, 90, 270, 6, 1000000, f.w)
-	firefly.NewFirefly(100, 90, 315, 7, 1000000, f.w)
+	f.w.HatchFireflies(f.nF)
+	// firefly.NewFirefly(100, 100, 0, 0, 1000000, f.w)
+	// firefly.NewFirefly(100, 110, 45, 1, 1000000, f.w)
+	// firefly.NewFirefly(90, 110, 90, 2, 1000000, f.w)
+	// firefly.NewFirefly(80, 110, 135, 3, 1000000, f.w)
+	// firefly.NewFirefly(80, 100, 180, 4, 1000000, f.w)
+	// firefly.NewFirefly(80, 90, 225, 5, 1000000, f.w)
+	// firefly.NewFirefly(90, 90, 270, 6, 1000000, f.w)
+	// firefly.NewFirefly(100, 90, 315, 7, 1000000, f.w)
 
 	for frameI := 0; frameI < f.filmDuration*f.fps; frameI++ {
 
@@ -153,10 +153,16 @@ func (f *Filmer) film() {
 		f.w.Move()
 		f.w.ClockTick()
 
-		if frameI == 10 {
-			break
-		}
+		// if frameI == 100 {
+		// 	break
+		// }
 	}
+
+	// to turn the frames into a video:
+	// ffmpeg -framerate 25 -i frame_%06d.png -c:v libx264 -r 25 -pix_fmt yuv420p out.mp4
+	// https://trac.ffmpeg.org/wiki/Slideshow
+	// https://stackoverflow.com/questions/24961127/how-to-create-a-video-from-images-with-ffmpeg
+	// https://hamelot.io/visualization/using-ffmpeg-to-convert-a-set-of-images-into-a-video/
 }
 
 func (f *Filmer) renderFrame(frameI int) {
@@ -184,7 +190,7 @@ func (f *Filmer) renderFrame(frameI int) {
 	frameName := fmt.Sprintf("frame_%06d.png", frameI)
 	fmt.Printf("frameName = %+v\n", frameName)
 	framePath := filepath.Join(f.outputFolder, frameName)
-	img = UpscaleImg(img, 5)
+	// img = UpscaleImg(img, 5)
 	SavePNG(framePath, img)
 }
 
