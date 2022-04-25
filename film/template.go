@@ -119,7 +119,8 @@ func remapOri(o int16) int16 {
 	// 270 6  | -180 180
 	// 315 7  | -225 135
 
-	remappedOri := -o + 90
+	// remappedOri := -o + 90
+	remappedOri := o + 90
 	// fmt.Printf("o = %+v remappedOri = %+v\n", o, remappedOri)
 
 	for remappedOri < 0 {

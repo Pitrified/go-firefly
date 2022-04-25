@@ -125,7 +125,15 @@ func (f *Filmer) film() {
 		f.blinkCooldown,
 		f.periodMin, f.periodMax,
 	)
-	f.w.HatchFireflies(f.nF)
+	// f.w.HatchFireflies(f.nF)
+	firefly.NewFirefly(100, 100, 0, 0, 1000000, f.w)
+	firefly.NewFirefly(100, 110, 45, 1, 1000000, f.w)
+	firefly.NewFirefly(90, 110, 90, 2, 1000000, f.w)
+	firefly.NewFirefly(80, 110, 135, 3, 1000000, f.w)
+	firefly.NewFirefly(80, 100, 180, 4, 1000000, f.w)
+	firefly.NewFirefly(80, 90, 225, 5, 1000000, f.w)
+	firefly.NewFirefly(90, 90, 270, 6, 1000000, f.w)
+	firefly.NewFirefly(100, 90, 315, 7, 1000000, f.w)
 
 	for frameI := 0; frameI < f.filmDuration*f.fps; frameI++ {
 
@@ -145,7 +153,7 @@ func (f *Filmer) film() {
 		f.w.Move()
 		f.w.ClockTick()
 
-		if frameI == 100 {
+		if frameI == 10 {
 			break
 		}
 	}
@@ -176,6 +184,7 @@ func (f *Filmer) renderFrame(frameI int) {
 	frameName := fmt.Sprintf("frame_%06d.png", frameI)
 	fmt.Printf("frameName = %+v\n", frameName)
 	framePath := filepath.Join(f.outputFolder, frameName)
+	img = UpscaleImg(img, 5)
 	SavePNG(framePath, img)
 }
 
